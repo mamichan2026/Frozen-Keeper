@@ -1,0 +1,1849 @@
+<!-- 冷食キーパー (Frozen Keeper) — freezer inventory tracker -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap');
+
+  :root{
+    --bg:#EEF3F7;
+    --frost-1:#DCEAF2;
+    --frost-2:#C9DEE9;
+    --surface:rgba(255,255,255,0.72);
+    --surface-solid:#FFFFFF;
+    --ink:#16232F;
+    --ink-soft:#5C7285;
+    --accent:#2C6E8E;
+    --accent-deep:#1B4A61;
+    --ice:#6FC3D6;
+    --amber:#D97A46;
+    --sage:#5E8E68;
+    --danger:#C1584B;
+    --line:#D3E1EA;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  #freezer-root{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, var(--frost-2), transparent),
+      var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:96px;
+    position:relative;
+  }
+
+  /* ---------- header ---------- */
+  .fz-header{
+    padding:28px 20px 22px;
+    position:relative;
+    overflow:hidden;
+    background:
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2272%22%20height%3D%2272%22%3E%3Cg%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%220.55%22%3E%3Cg%20id%3D%22arm%22%3E%3Cline%20x1%3D%2236%22%20y1%3D%2210%22%20x2%3D%2236%22%20y2%3D%2236%22/%3E%3Cline%20x1%3D%2236%22%20y1%3D%2216%22%20x2%3D%2231%22%20y2%3D%2220%22/%3E%3Cline%20x1%3D%2236%22%20y1%3D%2216%22%20x2%3D%2241%22%20y2%3D%2220%22/%3E%3Cline%20x1%3D%2236%22%20y1%3D%2224%22%20x2%3D%2231%22%20y2%3D%2228%22/%3E%3Cline%20x1%3D%2236%22%20y1%3D%2224%22%20x2%3D%2241%22%20y2%3D%2228%22/%3E%3C/g%3E%3Cuse%20href%3D%22%23arm%22%20transform%3D%22rotate%2860%2036%2036%29%22/%3E%3Cuse%20href%3D%22%23arm%22%20transform%3D%22rotate%28120%2036%2036%29%22/%3E%3Cuse%20href%3D%22%23arm%22%20transform%3D%22rotate%28180%2036%2036%29%22/%3E%3Cuse%20href%3D%22%23arm%22%20transform%3D%22rotate%28240%2036%2036%29%22/%3E%3Cuse%20href%3D%22%23arm%22%20transform%3D%22rotate%28300%2036%2036%29%22/%3E%3C/g%3E%3C/svg%3E"),
+      radial-gradient(ellipse 120% 60% at 50% -10%, var(--frost-2), transparent),
+      var(--bg);
+    clip-path: polygon(
+      0% 0%, 100% 0%, 100% calc(100% - 14px),
+      95% 100%, 90% calc(100% - 14px),
+      85% 100%, 80% calc(100% - 14px),
+      75% 100%, 70% calc(100% - 14px),
+      65% 100%, 60% calc(100% - 14px),
+      55% 100%, 50% calc(100% - 14px),
+      45% 100%, 40% calc(100% - 14px),
+      35% 100%, 30% calc(100% - 14px),
+      25% 100%, 20% calc(100% - 14px),
+      15% 100%, 10% calc(100% - 14px),
+      5% 100%, 0% calc(100% - 14px)
+    );
+  }
+  .fz-header::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 12% 20%, rgba(255,255,255,0.9) 0, transparent 3%),
+      radial-gradient(circle at 85% 15%, rgba(255,255,255,0.7) 0, transparent 2.5%),
+      radial-gradient(circle at 70% 60%, rgba(255,255,255,0.6) 0, transparent 2%),
+      radial-gradient(circle at 30% 75%, rgba(255,255,255,0.8) 0, transparent 2%),
+      radial-gradient(circle at 95% 80%, rgba(255,255,255,0.6) 0, transparent 2%);
+    pointer-events:none;
+  }
+  .fz-settings-btn{
+    position:absolute; top:26px; right:20px;
+    width:36px; height:36px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    z-index:2;
+  }
+  .fz-settings-btn:active{background:var(--frost-1);}
+  .fz-archive-btn{
+    position:absolute; top:26px; right:64px;
+    width:36px; height:36px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    z-index:2;
+  }
+  .fz-archive-btn:active{background:var(--frost-1);}
+  .fz-paste-btn{
+    position:absolute; top:26px; right:108px;
+    width:36px; height:36px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    z-index:2;
+  }
+  .fz-paste-btn:active{background:var(--frost-1);}
+
+  .fz-title-row{display:flex; align-items:baseline; gap:10px; position:relative;}
+  .fz-title{
+    font-family:'Zen Old Mincho', serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.04em;
+    color:var(--accent-deep);
+    margin:0;
+  }
+  .fz-count{
+    font-size:13px;
+    color:var(--ink-soft);
+    font-weight:500;
+    position:relative;
+  }
+  .fz-sub{
+    margin:4px 0 0;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    position:relative;
+  }
+
+  /* ---------- search ---------- */
+  .fz-search-wrap{
+    position:sticky; top:0; z-index:20;
+    padding:10px 16px 8px;
+    background:linear-gradient(var(--bg) 78%, transparent);
+    backdrop-filter:blur(6px);
+  }
+  .fz-search{
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface-solid);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:11px 14px;
+    box-shadow:0 1px 2px rgba(27,74,97,0.06);
+  }
+  .fz-search input{
+    border:none; outline:none; background:transparent;
+    font-family:inherit; font-size:15px; color:var(--ink); width:100%;
+  }
+  .fz-search input::placeholder{color:#9BB0C0;}
+  .fz-search svg{flex:0 0 auto;}
+
+  /* ---------- location chips ---------- */
+  .fz-chips{
+    display:flex; gap:8px; overflow-x:auto;
+    padding:10px 16px 4px;
+    scrollbar-width:none;
+  }
+  .fz-chips::-webkit-scrollbar{display:none;}
+  .fz-cook-filter-row{padding:0 16px 6px;}
+  .fz-cook-filter-chip{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:13px; font-weight:700;
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .fz-cook-filter-chip.active{
+    background:var(--ice);
+    border-color:var(--ice);
+    color:#fff;
+  }
+  .fz-chip{
+    flex:0 0 auto;
+    font-size:13px; font-weight:500;
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s, color .15s, border-color .15s;
+  }
+  .fz-chip.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+
+  /* ---------- list ---------- */
+  .fz-list{padding:6px 16px 8px;}
+  .fz-section-label{
+    font-family:'Zen Old Mincho', serif;
+    font-size:14.5px;
+    font-weight:700;
+    color:var(--accent-deep);
+    margin:18px 4px 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .fz-section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  .fz-card{
+    background:var(--surface);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,0.6);
+    border-radius:16px;
+    padding:13px 14px;
+    margin-bottom:10px;
+    box-shadow:0 2px 8px rgba(27,74,97,0.07);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    animation:fz-in .25s ease;
+  }
+  @keyframes fz-in{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .fz-card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .fz-card-name{font-size:16px; font-weight:700; color:var(--ink); line-height:1.3;}
+  .fz-card-meta{font-size:12px; color:var(--ink-soft); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;}
+  .fz-card-meta span{white-space:nowrap;}
+  .fz-card-note{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .fz-card-extras{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
+  .fz-extra-chip{
+    font-size:11.5px; font-weight:700;
+    color:var(--amber);
+    background:#FBEFE5;
+    border:1px solid #F0D9C2;
+    padding:3px 9px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .fz-badge{
+    flex:0 0 auto;
+    font-size:11px; font-weight:700;
+    padding:3px 9px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .fz-badge.new{background:#E3F1F6; color:var(--accent);}
+  .fz-badge.mid{background:#EFEAE0; color:#8A7A4E;}
+  .fz-badge.old{background:#FBEAE1; color:var(--amber);}
+
+  .fz-card-bottom{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .fz-stepper{
+    display:flex; align-items:center; gap:0;
+    background:var(--surface-solid);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .fz-stepper button{
+    width:38px; height:38px;
+    border:none; background:transparent;
+    font-size:19px; font-weight:700; color:var(--accent);
+    cursor:pointer;
+  }
+  .fz-stepper button:active{background:var(--frost-1);}
+  .fz-stepper .fz-qty{
+    min-width:30px; text-align:center;
+    font-size:15px; font-weight:700; color:var(--ink);
+  }
+  .fz-stepper input.fz-qty{
+    border:none; background:transparent;
+    font-family:inherit; outline:none;
+    padding:0; width:40px;
+  }
+  .fz-use-btn{
+    flex:1;
+    border:none;
+    background:var(--sage);
+    color:#fff;
+    font-family:inherit;
+    font-size:13.5px; font-weight:700;
+    padding:10px 12px;
+    border-radius:12px;
+    cursor:pointer;
+  }
+  .fz-use-btn:active{opacity:0.85;}
+  .fz-edit-btn{
+    width:38px; height:38px;
+    flex:0 0 auto;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+
+  .fz-empty{
+    text-align:center;
+    padding:60px 24px;
+    color:var(--ink-soft);
+  }
+  .fz-empty-icon{font-size:34px; margin-bottom:10px;}
+  .fz-empty-title{font-family:'Zen Old Mincho', serif; font-size:16px; color:var(--accent-deep); margin-bottom:4px; font-weight:700;}
+  .fz-empty-sub{font-size:13px; line-height:1.6;}
+
+  /* ---------- FAB ---------- */
+  .fz-fab{
+    position:fixed;
+    right:20px; bottom:26px;
+    width:58px; height:58px;
+    border-radius:50%;
+    background:linear-gradient(145deg, var(--ice), var(--accent));
+    color:#fff;
+    border:none;
+    font-size:28px;
+    box-shadow:0 6px 18px rgba(44,110,142,0.4);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    z-index:30;
+  }
+  .fz-fab:active{transform:scale(0.94);}
+
+  /* ---------- sheet / modal ---------- */
+  .fz-overlay{
+    position:fixed; inset:0;
+    background:rgba(22,35,47,0.42);
+    z-index:40;
+    display:flex; align-items:flex-end;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s;
+  }
+  .fz-overlay.open{opacity:1; pointer-events:auto;}
+  .fz-sheet{
+    background:var(--bg);
+    width:100%;
+    border-radius:22px 22px 0 0;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+    transform:translateY(100%);
+    transition:transform .25s cubic-bezier(.32,.72,0,1);
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .fz-overlay.open .fz-sheet{transform:translateY(0);}
+  .fz-sheet-title{
+    font-family:'Zen Old Mincho', serif;
+    font-size:18px; font-weight:700;
+    color:var(--accent-deep);
+    margin:2px 0 16px;
+  }
+  .fz-field{margin-bottom:14px;}
+  .fz-field label{
+    display:block; font-size:12.5px; font-weight:700;
+    color:var(--ink-soft); margin-bottom:6px;
+  }
+  .fz-field input, .fz-field select{
+    width:100%;
+    font-family:inherit; font-size:15px;
+    padding:12px 13px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink);
+    outline:none;
+  }
+  .fz-field input:focus, .fz-field select:focus{border-color:var(--accent);}
+  .fz-loc-row{display:flex; gap:8px;}
+  .fz-loc-row select{flex:1;}
+  .fz-loc-row input{flex:1; display:none;}
+  .fz-new-loc-toggle{
+    font-size:12px; color:var(--accent); font-weight:700;
+    margin-top:6px; cursor:pointer; display:inline-block;
+  }
+  .fz-qty-inline{display:flex; align-items:center; gap:14px;}
+  .fz-qty-inline .fz-stepper{flex:0 0 auto;}
+
+  .fz-sheet-actions{display:flex; gap:10px; margin-top:6px;}
+  .fz-btn-primary{
+    flex:1;
+    background:var(--accent);
+    color:#fff; border:none;
+    font-family:inherit; font-weight:700; font-size:15px;
+    padding:13px; border-radius:12px;
+    cursor:pointer;
+  }
+  .fz-btn-primary:active{background:var(--accent-deep);}
+  .fz-btn-ghost{
+    flex:0 0 auto;
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    font-family:inherit; font-weight:700; font-size:15px;
+    padding:13px 18px; border-radius:12px;
+    cursor:pointer;
+  }
+  .fz-btn-danger{
+    background:var(--danger); color:#fff; border:none;
+    font-family:inherit; font-weight:700; font-size:13.5px;
+    padding:10px 14px; border-radius:12px; cursor:pointer;
+    width:100%; margin-top:4px;
+  }
+
+  .fz-locmgr-row{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .fz-locmgr-row:last-child{border-bottom:none;}
+  .fz-locmgr-input{
+    flex:1;
+    font-family:inherit; font-size:14.5px;
+    padding:9px 11px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink);
+    outline:none;
+    min-width:0;
+  }
+  .fz-locmgr-input:focus{border-color:var(--accent);}
+  .fz-locmgr-count{
+    flex:0 0 auto;
+    font-size:11.5px; color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .fz-locmgr-del{
+    flex:0 0 auto;
+    border:1px solid var(--danger);
+    background:transparent;
+    color:var(--danger);
+    font-family:inherit; font-size:12px; font-weight:700;
+    padding:8px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .fz-locmgr-del.confirm{
+    background:var(--danger);
+    color:#fff;
+  }
+  .fz-locmgr-add-row{display:flex; gap:8px; margin-top:14px;}
+  .fz-locmgr-add-row input{flex:1;}
+  .fz-locmgr-add-btn{
+    flex:0 0 auto;
+    background:var(--accent); color:#fff; border:none;
+    font-family:inherit; font-weight:700; font-size:14px;
+    padding:0 16px; border-radius:12px; cursor:pointer;
+  }
+  .fz-locmgr-hint{font-size:11.5px; color:var(--ink-soft); margin:2px 0 14px; line-height:1.6;}
+
+  .fz-archive-card{
+    background:var(--surface-solid);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 13px;
+    margin-bottom:10px;
+  }
+  .fz-archive-top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .fz-archive-name{font-size:14.5px; font-weight:700; color:var(--ink);}
+  .fz-archive-price{font-size:13px; font-weight:700; color:var(--accent-deep); white-space:nowrap;}
+  .fz-archive-dates{font-size:11.5px; color:var(--ink-soft); margin-top:3px;}
+  .fz-archive-actions{display:flex; gap:8px; margin-top:10px;}
+  .fz-rate-btn{
+    flex:1;
+    font-family:inherit; font-size:12.5px; font-weight:700;
+    padding:8px 6px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .fz-rate-btn.again.active{background:var(--sage); border-color:var(--sage); color:#fff;}
+  .fz-rate-btn.never.active{background:var(--danger); border-color:var(--danger); color:#fff;}
+  .fz-rate-btn.renchin.active{background:var(--ice); border-color:var(--ice); color:#fff;}
+  .fz-rate-btn.cook.active{background:var(--amber); border-color:var(--amber); color:#fff;}
+  .fz-archive-del{
+    flex:0 0 auto;
+    width:36px;
+    font-family:inherit; font-size:12px; font-weight:700;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .fz-archive-del.confirm{background:var(--danger); border-color:var(--danger); color:#fff;}
+  .fz-archive-empty{text-align:center; padding:40px 20px; color:var(--ink-soft); font-size:13px; line-height:1.7;}
+
+  .fz-pct-select{display:flex; gap:8px; flex-wrap:wrap;}
+  .fz-pct-select button{
+    flex:1 1 auto;
+    min-width:70px;
+    font-family:inherit; font-size:13.5px; font-weight:700;
+    padding:10px 8px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .fz-pct-select button.active{
+    background:var(--ice);
+    border-color:var(--ice);
+    color:#fff;
+  }
+  .fz-card-pct{
+    display:flex; gap:5px;
+    flex:1;
+  }
+  .fz-card-pct button{
+    flex:1;
+    font-family:inherit; font-size:12px; font-weight:700;
+    padding:9px 4px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .fz-card-pct button.active{
+    background:var(--ice);
+    border-color:var(--ice);
+    color:#fff;
+  }
+  .fz-paste-amount-tag{
+    flex:0 0 auto;
+    font-size:11.5px; font-weight:700;
+    color:var(--ink-soft);
+    background:var(--frost-1);
+    padding:8px 9px;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+  .fz-paste-qty{
+    flex:0 0 56px;
+    font-family:inherit; font-size:14px;
+    padding:8px 6px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink);
+    outline:none;
+    text-align:center;
+  }
+    display:flex; align-items:center; gap:8px;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .fz-paste-row:last-child{border-bottom:none;}
+  .fz-paste-check{
+    flex:0 0 auto;
+    width:20px; height:20px;
+    accent-color:var(--accent);
+  }
+  .fz-paste-name{
+    flex:1;
+    font-family:inherit; font-size:14px;
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink);
+    outline:none;
+    min-width:0;
+  }
+  .fz-paste-price{
+    flex:0 0 84px;
+    font-family:inherit; font-size:14px;
+    padding:8px 8px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink);
+    outline:none;
+    text-align:right;
+  }
+  .fz-paste-empty{
+    text-align:center; padding:24px 12px;
+    color:var(--ink-soft); font-size:13px; line-height:1.7;
+  }
+  .fz-paste-textarea{
+    width:100%;
+    font-family:inherit; font-size:13.5px;
+    padding:12px 13px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--surface-solid);
+    color:var(--ink);
+    outline:none;
+    resize:vertical;
+    min-height:120px;
+    line-height:1.5;
+  }
+  .fz-paste-textarea:focus{border-color:var(--accent);}
+  .fz-paste-count{font-size:12.5px; color:var(--ink-soft); margin:10px 4px 6px;}
+
+  .fz-toast{
+    position:fixed; left:50%; bottom:100px;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--accent-deep); color:#fff;
+    font-size:13px; font-weight:500;
+    padding:10px 18px; border-radius:999px;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s;
+    z-index:50;
+    white-space:nowrap;
+  }
+  .fz-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+
+<div id="freezer-root">
+  <div class="fz-header">
+    <button class="fz-paste-btn" id="fz-paste-btn" aria-label="coop注文履歴から登録">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+    </button>
+    <button class="fz-archive-btn" id="fz-archive-btn" aria-label="使用履歴">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+    </button>
+    <button class="fz-settings-btn" id="fz-settings-btn" aria-label="場所の管理">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    </button>
+    <div class="fz-title-row">
+      <p class="fz-title">冷食キーパー<span style="font-size:12px; font-weight:500; letter-spacing:0.02em; color:var(--ink-soft); margin-left:6px;">Frozen Keeper</span></p>
+      <span class="fz-count" id="fz-count"></span>
+    </div>
+    <p class="fz-sub">必要なものを素早く取り出しましょう!</p>
+  </div>
+
+  <div class="fz-search-wrap">
+    <div class="fz-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9BB0C0" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="fz-search-input" type="text" placeholder="名前で検索…" />
+    </div>
+  </div>
+
+  <div class="fz-cook-filter-row">
+    <span class="fz-cook-filter-chip" id="fz-renchin-filter">⚡ レンチンだけ表示</span>
+  </div>
+
+  <div class="fz-chips" id="fz-chips"></div>
+
+  <div class="fz-list" id="fz-list"></div>
+
+  <button class="fz-fab" id="fz-fab" aria-label="追加">＋</button>
+</div>
+
+<div class="fz-overlay" id="fz-overlay">
+  <div class="fz-sheet">
+    <p class="fz-sheet-title" id="fz-sheet-title">冷凍庫に追加</p>
+    <input type="hidden" id="fz-edit-id" />
+
+    <div class="fz-field">
+      <label>食品名</label>
+      <input id="fz-input-name" type="text" placeholder="例: 鶏むね肉" />
+    </div>
+
+    <div class="fz-field">
+      <label>食べ方</label>
+      <div class="fz-archive-actions" style="margin-top:0;">
+        <button class="fz-rate-btn renchin" id="fz-form-cook-renchin" type="button">⚡ レンチンのみ</button>
+        <button class="fz-rate-btn cook" id="fz-form-cook-cook" type="button">🔥 調理が必要</button>
+      </div>
+    </div>
+
+    <div class="fz-field">
+      <label>場所</label>
+      <div class="fz-loc-row">
+        <select id="fz-select-loc"></select>
+        <input id="fz-input-newloc" type="text" placeholder="新しい場所名" />
+      </div>
+      <span class="fz-new-loc-toggle" id="fz-toggle-newloc">＋ 新しい場所を作る</span>
+    </div>
+
+    <div class="fz-field">
+      <label id="fz-label-purchasedate">購入日 (お届け日)</label>
+      <input id="fz-input-purchasedate" type="text" inputmode="numeric" placeholder="例: 8/4" />
+    </div>
+
+    <div class="fz-field">
+      <label>残りの管理方法</label>
+      <div class="fz-archive-actions" style="margin-top:0;">
+        <button class="fz-rate-btn renchin" id="fz-form-manage-count" type="button">🔢 個数で管理</button>
+        <button class="fz-rate-btn cook" id="fz-form-manage-amount" type="button">📊 残量(%)で管理</button>
+      </div>
+    </div>
+
+    <div class="fz-field" id="fz-qty-field">
+      <label>数量・個数 (中身の残り個数の管理にも使えます)</label>
+      <div class="fz-qty-inline">
+        <div class="fz-stepper">
+          <button id="fz-form-qty-minus" type="button">−</button>
+          <input class="fz-qty" id="fz-form-qty-val" type="text" inputmode="numeric" value="1" />
+          <button id="fz-form-qty-plus" type="button">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fz-field" id="fz-pct-field" style="display:none;">
+      <label>残量のめやす</label>
+      <div class="fz-pct-select" id="fz-form-pct-select">
+        <button data-pct="100" type="button">約100%</button>
+        <button data-pct="75" type="button">約75%</button>
+        <button data-pct="50" type="button">約50%</button>
+        <button data-pct="25" type="button">約25%</button>
+      </div>
+    </div>
+
+    <div class="fz-field">
+      <label>金額 (税抜・任意)</label>
+      <input id="fz-input-price" type="text" inputmode="numeric" placeholder="例: 398" />
+    </div>
+
+    <div class="fz-field">
+      <label>メモ (任意)</label>
+      <input id="fz-input-note" type="text" placeholder="例: 味付け済み・8/10までに使う" />
+    </div>
+
+    <div class="fz-field">
+      <label>追加で必要な物 (任意・カンマ区切り)</label>
+      <input id="fz-input-extras" type="text" placeholder="例: 玉ねぎ, もやし" />
+    </div>
+
+    <div class="fz-field">
+      <label>評価 (任意・後からでも変更できます)</label>
+      <div class="fz-archive-actions" style="margin-top:0;">
+        <button class="fz-rate-btn again" id="fz-form-rate-again" type="button"></button>
+        <button class="fz-rate-btn never" id="fz-form-rate-never" type="button"></button>
+      </div>
+    </div>
+
+    <div class="fz-sheet-actions">
+      <button class="fz-btn-ghost" id="fz-cancel-btn" type="button">キャンセル</button>
+      <button class="fz-btn-primary" id="fz-save-btn" type="button">保存する</button>
+    </div>
+    <button class="fz-btn-danger" id="fz-delete-btn" type="button" style="display:none;">このアイテムを削除</button>
+  </div>
+</div>
+
+<div class="fz-overlay" id="fz-loc-overlay">
+  <div class="fz-sheet">
+    <p class="fz-sheet-title">場所の管理</p>
+
+    <div class="fz-field">
+      <label>日付の管理方法</label>
+      <div class="fz-archive-actions" style="margin-top:0;">
+        <button class="fz-rate-btn renchin" id="fz-datemode-purchase" type="button">購入日で管理</button>
+        <button class="fz-rate-btn cook" id="fz-datemode-expiry" type="button">賞味期限で管理</button>
+      </div>
+      <p class="fz-locmgr-hint" style="margin-bottom:0;">切り替えると、日付の表示や「そろそろ」の警告の出し方が変わります。すでに入力した日付データはそのまま残ります。</p>
+    </div>
+
+    <p class="fz-locmgr-hint">名前をタップして書き換えると変更、その場所のアイテムも自動で移動します。削除すると中のアイテムは「未分類」に移ります。</p>
+    <div id="fz-loc-list"></div>
+    <div class="fz-locmgr-add-row">
+      <input id="fz-locmgr-newname" type="text" placeholder="新しい場所名 (例: 下段-右)" />
+      <button class="fz-locmgr-add-btn" id="fz-locmgr-add-btn" type="button">追加</button>
+    </div>
+    <div class="fz-sheet-actions" style="margin-top:18px;">
+      <button class="fz-btn-primary" id="fz-locmgr-close" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="fz-overlay" id="fz-paste-overlay">
+  <div class="fz-sheet">
+    <p class="fz-sheet-title">coop注文履歴から登録</p>
+    <p class="fz-locmgr-hint">coopの注文履歴ページで商品欄をコピーして、下に貼り付けてください。「冷凍」と書かれている商品だけを自動で読み取ります。</p>
+
+    <div class="fz-field">
+      <textarea class="fz-paste-textarea" id="fz-paste-textarea" placeholder="ここに注文履歴を貼り付け"></textarea>
+    </div>
+    <div class="fz-sheet-actions" style="margin-bottom:4px;">
+      <button class="fz-btn-primary" id="fz-paste-parse-btn" type="button">解析する</button>
+    </div>
+
+    <div id="fz-paste-results-wrap" style="display:none;">
+      <div class="fz-paste-count" id="fz-paste-count"></div>
+      <div id="fz-paste-results"></div>
+
+      <div class="fz-field" style="margin-top:14px;">
+        <label>登録先の場所 (まとめて指定)</label>
+        <div class="fz-loc-row">
+          <select id="fz-paste-select-loc"></select>
+          <input id="fz-paste-input-newloc" type="text" placeholder="新しい場所名" />
+        </div>
+        <span class="fz-new-loc-toggle" id="fz-paste-toggle-newloc">＋ 新しい場所を作る</span>
+      </div>
+
+      <div class="fz-field">
+        <label id="fz-label-paste-date">購入日 (お届け日)</label>
+        <input id="fz-paste-date" type="text" inputmode="numeric" placeholder="例: 8/4" />
+      </div>
+    </div>
+
+    <div class="fz-sheet-actions" style="margin-top:6px;">
+      <button class="fz-btn-ghost" id="fz-paste-cancel-btn" type="button">閉じる</button>
+      <button class="fz-btn-primary" id="fz-paste-add-btn" type="button" style="display:none;">まとめて追加する</button>
+    </div>
+  </div>
+</div>
+
+<div class="fz-overlay" id="fz-archive-overlay">
+  <div class="fz-sheet">
+    <p class="fz-sheet-title">使用履歴</p>
+    <p class="fz-locmgr-hint">使い切ったものはここに残ります。「また買いたい」「もう買わない」を付けておくと、次の注文の参考になります。</p>
+    <div class="fz-chips" id="fz-archive-chips" style="padding:0 0 12px;"></div>
+    <div id="fz-archive-list"></div>
+    <div class="fz-sheet-actions" style="margin-top:10px;">
+      <button class="fz-btn-primary" id="fz-archive-close" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="fz-toast" id="fz-toast"></div>
+
+<script>
+(function(){
+  const STORE_KEY = 'freezer-data';
+  const DEFAULT_LOCATIONS = ['上段','下段-左','下段-右','引き出し'];
+
+  let state = { items: [], locations: DEFAULT_LOCATIONS.slice(), archive: [], dateMode: 'purchase' };
+  let activeLoc = 'all';
+  let searchTerm = '';
+  let formQty = 1;
+  let formManageType = 'count';
+  let formPct = 100;
+  let formRating = null;
+  let formCookType = null;
+  let editingId = null;
+  let archiveFilter = 'all';
+  let renchinOnly = false;
+  let pasteResults = [];
+
+  const $ = (id) => document.getElementById(id);
+  const listEl = $('fz-list');
+  const chipsEl = $('fz-chips');
+  const countEl = $('fz-count');
+  const overlay = $('fz-overlay');
+  const toastEl = $('fz-toast');
+
+  function uid(){ return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+  function pad2(n){ return String(n).padStart(2,'0'); }
+
+  function parseDateInput(str){
+    if(str == null) return null;
+    str = String(str).trim();
+    if(!str) return null;
+    let m = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if(m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+    m = str.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+    if(m){
+      const year = new Date().getFullYear();
+      return `${year}-${pad2(m[1])}-${pad2(m[2])}`;
+    }
+    return 'invalid';
+  }
+
+  function formatMD(iso){
+    if(!iso) return '';
+    const parts = iso.split('-');
+    if(parts.length < 3) return '';
+    return `${parseInt(parts[1],10)}/${parseInt(parts[2],10)}`;
+  }
+
+  function formatYen(price){
+    if(price === null || price === undefined || price === '' || isNaN(price)) return '';
+    return '¥' + Number(price).toLocaleString('ja-JP');
+  }
+
+  function parseExtras(str){
+    if(!str) return [];
+    return str.split(/[,、]/).map(s => s.trim()).filter(Boolean);
+  }
+
+  function daysSince(dateStr){
+    const then = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    const diff = Math.floor((now - then) / 86400000);
+    return diff < 0 ? 0 : diff;
+  }
+
+  function daysUntil(dateStr){
+    const then = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    return Math.floor((then - now) / 86400000);
+  }
+
+  // ---------- storage layer ----------
+  // Claude.ai artifacts can use window.storage (cloud-backed). When this file
+  // is opened directly in a browser (e.g. saved to a desktop folder), that
+  // API doesn't exist, so we fall back to the browser's own localStorage.
+  const hasCloudStorage = (typeof window.storage !== 'undefined') && window.storage && typeof window.storage.get === 'function';
+
+  async function storageGet(key){
+    if(hasCloudStorage){
+      try{ return await window.storage.get(key, false); }
+      catch(e){ return null; }
+    }
+    try{
+      const v = localStorage.getItem(key);
+      return v ? { key, value: v, shared: false } : null;
+    }catch(e){ return null; }
+  }
+
+  async function storageSet(key, value){
+    if(hasCloudStorage){
+      try{ return await window.storage.set(key, value, false); }
+      catch(e){ return null; }
+    }
+    try{
+      localStorage.setItem(key, value);
+      return { key, value, shared: false };
+    }catch(e){ return null; }
+  }
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toastEl.classList.remove('show'), 1600);
+  }
+
+  async function load(){
+    try{
+      const res = await storageGet(STORE_KEY);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        state.items = parsed.items || [];
+        state.locations = (parsed.locations && parsed.locations.length) ? parsed.locations : DEFAULT_LOCATIONS.slice();
+        state.archive = parsed.archive || [];
+        state.dateMode = (parsed.dateMode === 'expiry') ? 'expiry' : 'purchase';
+      }
+    }catch(e){
+      // no data yet — keep defaults
+    }
+    // migrate old addedDate field to purchaseDate
+    let migrated = false;
+    state.items.forEach(it => {
+      if(!it.purchaseDate){
+        it.purchaseDate = it.addedDate || todayISO();
+        migrated = true;
+      }
+    });
+    if(migrated) save();
+    render();
+  }
+
+  async function save(){
+    try{
+      await storageSet(STORE_KEY, JSON.stringify(state));
+    }catch(e){
+      showToast('保存に失敗しました');
+    }
+  }
+
+  function locationsInUse(){
+    const set = new Set(state.locations);
+    state.items.forEach(it => set.add(it.location));
+    return Array.from(set);
+  }
+
+  function renderChips(){
+    const locs = locationsInUse();
+    let html = `<div class="fz-chip ${activeLoc==='all'?'active':''}" data-loc="all">すべて</div>`;
+    locs.forEach(l => {
+      html += `<div class="fz-chip ${activeLoc===l?'active':''}" data-loc="${escapeHtml(l)}">${escapeHtml(l)}</div>`;
+    });
+    chipsEl.innerHTML = html;
+    chipsEl.querySelectorAll('.fz-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        activeLoc = chip.dataset.loc;
+        render();
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function heartIcon(size){
+    size = size || 13;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="vertical-align:-2px;"><path d="M12 20s-7-4.35-9.5-8.1C.9 9.7 2 6.5 5.2 6c2-.3 3.6.7 4.8 2.3C11.2 6.7 12.8 5.7 14.8 6c3.2.5 4.3 3.7 2.7 5.9C15 15.65 12 20 12 20z" fill="#EC7FB0"/></svg>`;
+  }
+
+  function brokenHeartIcon(size){
+    size = size || 13;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="vertical-align:-2px;"><path d="M12 20s-7-4.35-9.5-8.1C.9 9.7 2 6.5 5.2 6c2-.3 3.6.7 4.8 2.3C11.2 6.7 12.8 5.7 14.8 6c3.2.5 4.3 3.7 2.7 5.9C15 15.65 12 20 12 20z" fill="none" stroke="#7EC8E3" stroke-width="1.8"/><path d="M12 8.3 10.5 12 13 13.5 11 17" fill="none" stroke="#7EC8E3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
+  function badgeFor(days){
+    if(days <= 30) return {cls:'new', label: days + '日'};
+    if(days <= 90) return {cls:'mid', label: days + '日'};
+    return {cls:'old', label: days + '日 そろそろ'};
+  }
+
+  function badgeForItem(it){
+    if(state.dateMode === 'expiry'){
+      const left = daysUntil(it.purchaseDate);
+      if(left < 0) return {cls:'old', label: '期限切れ'};
+      if(left <= 7) return {cls:'old', label: `あと${left}日`};
+      if(left <= 30) return {cls:'mid', label: `あと${left}日`};
+      return {cls:'new', label: `あと${left}日`};
+    }
+    return badgeFor(daysSince(it.purchaseDate));
+  }
+
+  function dateMetaLabel(it){
+    const md = formatMD(it.purchaseDate);
+    if(!md) return '';
+    return state.dateMode === 'expiry' ? `${md}まで` : `${md}購入`;
+  }
+
+  function updateDateLabels(){
+    const text = state.dateMode === 'expiry' ? '賞味期限' : '購入日 (お届け日)';
+    const purchaseLabel = $('fz-label-purchasedate');
+    const pasteLabel = $('fz-label-paste-date');
+    if(purchaseLabel) purchaseLabel.textContent = text;
+    if(pasteLabel) pasteLabel.textContent = text;
+  }
+
+  function updateDateModeButtons(){
+    const purchaseBtn = $('fz-datemode-purchase');
+    const expiryBtn = $('fz-datemode-expiry');
+    if(purchaseBtn) purchaseBtn.classList.toggle('active', state.dateMode !== 'expiry');
+    if(expiryBtn) expiryBtn.classList.toggle('active', state.dateMode === 'expiry');
+  }
+
+  function render(){
+    countEl.textContent = state.items.length ? `${state.items.length}品目` : '';
+    renderChips();
+    updateDateLabels();
+
+    let items = state.items.filter(it => {
+      const matchLoc = activeLoc === 'all' || it.location === activeLoc;
+      const term = searchTerm.toLowerCase();
+      const nameMatch = it.name.toLowerCase().includes(term);
+      const extrasMatch = (it.extras || []).some(x => x.toLowerCase().includes(term));
+      const matchSearch = !searchTerm || nameMatch || extrasMatch;
+      const matchCook = !renchinOnly || it.cookType === 'renchin';
+      return matchLoc && matchSearch && matchCook;
+    });
+
+    if(items.length === 0){
+      listEl.innerHTML = `
+        <div class="fz-empty">
+          <div class="fz-empty-icon">🧊</div>
+          <div class="fz-empty-title">${state.items.length===0 ? 'まだ何も登録されていません' : '見つかりませんでした'}</div>
+          <div class="fz-empty-sub">${state.items.length===0 ? '右下の＋ボタンから\n冷凍庫の中身を登録しましょう' : '検索や場所の絞り込みを\n変えてみてください'}</div>
+        </div>`;
+      return;
+    }
+
+    // group by location, preserve a stable location order
+    const order = locationsInUse();
+    const grouped = {};
+    items.forEach(it => {
+      (grouped[it.location] = grouped[it.location] || []).push(it);
+    });
+
+    let html = '';
+    order.filter(l => grouped[l]).forEach(loc => {
+      html += `<div class="fz-section-label">${escapeHtml(loc)}</div>`;
+      grouped[loc]
+        .sort((a,b)=> a.name.localeCompare(b.name,'ja'))
+        .forEach(it => {
+          const b = badgeForItem(it);
+          const dateLabel = dateMetaLabel(it);
+          const yen = formatYen(it.price);
+          html += `
+          <div class="fz-card" data-id="${it.id}">
+            <div class="fz-card-top">
+              <div>
+                <div class="fz-card-name">${escapeHtml(it.name)}</div>
+                ${(dateLabel || yen || it.cookType) ? `<div class="fz-card-meta">${dateLabel ? `<span>${dateLabel}</span>` : ''}${yen ? `<span>${yen}</span>` : ''}${it.cookType==='renchin' ? `<span>⚡レンチン</span>` : ''}${it.cookType==='cook' ? `<span>🔥調理</span>` : ''}${it.rating==='again' ? `<span style="color:var(--sage); font-weight:700;">${heartIcon(12)} また買いたい</span>` : ''}${it.rating==='never' ? `<span style="color:var(--danger); font-weight:700;">${brokenHeartIcon(12)} もう買わない</span>` : ''}</div>` : ''}
+                ${it.note ? `<div class="fz-card-note">${escapeHtml(it.note)}</div>` : ''}
+                ${(it.extras && it.extras.length) ? `<div class="fz-card-extras">${it.extras.map(x => `<span class="fz-extra-chip">＋${escapeHtml(x)}</span>`).join('')}</div>` : ''}
+              </div>
+              <span class="fz-badge ${b.cls}">${b.label}</span>
+            </div>
+            <div class="fz-card-bottom">
+              ${it.manageType === 'amount' ? `
+              <div class="fz-card-pct" data-role="pct">
+                ${[100,75,50,25].map(p => `<button data-action="pct" data-pct="${p}" data-id="${it.id}" class="${it.remainingPct===p ? 'active' : ''}">${p}%</button>`).join('')}
+              </div>` : `
+              <div class="fz-stepper" data-role="qty">
+                <button data-action="minus" data-id="${it.id}">−</button>
+                <span class="fz-qty">${it.quantity}</span>
+                <button data-action="plus" data-id="${it.id}">＋</button>
+              </div>`}
+              <button class="fz-use-btn" data-action="use" data-id="${it.id}">使い切った</button>
+              <button class="fz-edit-btn" data-action="edit" data-id="${it.id}" aria-label="編集">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+            </div>
+          </div>`;
+        });
+    });
+    listEl.innerHTML = html;
+
+    listEl.querySelectorAll('[data-action="plus"]').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.id, 1)));
+    listEl.querySelectorAll('[data-action="minus"]').forEach(b => b.addEventListener('click', () => changeQty(b.dataset.id, -1)));
+    listEl.querySelectorAll('[data-action="pct"]').forEach(b => b.addEventListener('click', () => setRemainingPct(b.dataset.id, parseInt(b.dataset.pct,10))));
+    listEl.querySelectorAll('[data-action="use"]').forEach(b => b.addEventListener('click', () => useUp(b.dataset.id)));
+    listEl.querySelectorAll('[data-action="edit"]').forEach(b => b.addEventListener('click', () => openEdit(b.dataset.id)));
+  }
+
+  function changeQty(id, delta){
+    const it = state.items.find(i => i.id === id);
+    if(!it) return;
+    it.quantity = Math.max(1, it.quantity + delta);
+    save();
+    render();
+  }
+
+  function setRemainingPct(id, pct){
+    const it = state.items.find(i => i.id === id);
+    if(!it) return;
+    it.remainingPct = pct;
+    save();
+    render();
+  }
+
+  function useUp(id){
+    const it = state.items.find(i => i.id === id);
+    if(!it) return;
+    if(it.manageType !== 'amount' && it.quantity > 1){
+      it.quantity -= 1;
+      save();
+      render();
+      return;
+    }
+    state.archive.unshift({
+      id: uid(),
+      name: it.name,
+      price: (it.price === undefined ? null : it.price),
+      purchaseDate: it.purchaseDate,
+      note: it.note || '',
+      rating: it.rating || null,
+      archivedDate: todayISO()
+    });
+    state.items = state.items.filter(i => i.id !== id);
+    save();
+    render();
+    showToast(`「${it.name}」を使い切りました`);
+  }
+
+  // ---------- form / sheet ----------
+  function populateLocationSelect(){
+    const sel = $('fz-select-loc');
+    const locs = locationsInUse();
+    sel.innerHTML = locs.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+  }
+
+  function updateRateButtons(){
+    $('fz-form-rate-again').classList.toggle('active', formRating === 'again');
+    $('fz-form-rate-never').classList.toggle('active', formRating === 'never');
+  }
+
+  function updateCookButtons(){
+    $('fz-form-cook-renchin').classList.toggle('active', formCookType === 'renchin');
+    $('fz-form-cook-cook').classList.toggle('active', formCookType === 'cook');
+  }
+
+  function updateManageTypeUI(){
+    $('fz-form-manage-count').classList.toggle('active', formManageType !== 'amount');
+    $('fz-form-manage-amount').classList.toggle('active', formManageType === 'amount');
+    $('fz-qty-field').style.display = (formManageType === 'amount') ? 'none' : 'block';
+    $('fz-pct-field').style.display = (formManageType === 'amount') ? 'block' : 'none';
+    $('fz-form-pct-select').querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.pct,10) === formPct);
+    });
+  }
+
+  function openAdd(){
+    editingId = null;
+    $('fz-sheet-title').textContent = '冷凍庫に追加';
+    $('fz-input-name').value = '';
+    $('fz-input-note').value = '';
+    $('fz-input-price').value = '';
+    $('fz-input-purchasedate').value = formatMD(todayISO());
+    $('fz-input-extras').value = '';
+    formQty = 1;
+    $('fz-form-qty-val').value = '1';
+    formManageType = 'count';
+    formPct = 100;
+    updateManageTypeUI();
+    formRating = null;
+    formCookType = null;
+    updateRateButtons();
+    updateCookButtons();
+    populateLocationSelect();
+    $('fz-input-newloc').style.display = 'none';
+    $('fz-select-loc').style.display = 'block';
+    $('fz-input-newloc').value = '';
+    $('fz-delete-btn').style.display = 'none';
+    overlay.classList.add('open');
+    setTimeout(()=> $('fz-input-name').focus(), 250);
+  }
+
+  function openEdit(id){
+    const it = state.items.find(i => i.id === id);
+    if(!it) return;
+    editingId = id;
+    $('fz-sheet-title').textContent = 'アイテムを編集';
+    $('fz-input-name').value = it.name;
+    $('fz-input-note').value = it.note || '';
+    $('fz-input-price').value = (it.price === undefined || it.price === null) ? '' : it.price;
+    $('fz-input-purchasedate').value = formatMD(it.purchaseDate) || formatMD(todayISO());
+    $('fz-input-extras').value = (it.extras && it.extras.length) ? it.extras.join(', ') : '';
+    formQty = it.quantity;
+    $('fz-form-qty-val').value = String(formQty);
+    formManageType = (it.manageType === 'amount') ? 'amount' : 'count';
+    formPct = it.remainingPct || 100;
+    updateManageTypeUI();
+    formRating = it.rating || null;
+    formCookType = it.cookType || null;
+    updateRateButtons();
+    updateCookButtons();
+    populateLocationSelect();
+    $('fz-select-loc').value = it.location;
+    $('fz-input-newloc').style.display = 'none';
+    $('fz-select-loc').style.display = 'block';
+    $('fz-input-newloc').value = '';
+    $('fz-delete-btn').style.display = 'block';
+    overlay.classList.add('open');
+  }
+
+  function closeSheet(){
+    overlay.classList.remove('open');
+  }
+
+  function saveForm(){
+    const name = $('fz-input-name').value.trim();
+    if(!name){ showToast('食品名を入力してください'); return; }
+
+    const dateRaw = $('fz-input-purchasedate').value;
+    const purchaseDate = parseDateInput(dateRaw);
+    if(purchaseDate === 'invalid'){
+      showToast('日付は「8/4」のように入力してください');
+      return;
+    }
+
+    const priceRaw = $('fz-input-price').value.trim();
+    let price = null;
+    if(priceRaw !== ''){
+      const n = Number(priceRaw.replace(/[^\d.]/g,''));
+      if(isNaN(n)){
+        showToast('金額は数字で入力してください');
+        return;
+      }
+      price = n;
+    }
+
+    let location;
+    if($('fz-input-newloc').style.display !== 'none' && $('fz-input-newloc').value.trim()){
+      location = $('fz-input-newloc').value.trim();
+      if(!state.locations.includes(location)) state.locations.push(location);
+    } else {
+      location = $('fz-select-loc').value;
+    }
+    if(!location) location = '未分類';
+
+    const note = $('fz-input-note').value.trim();
+    const extras = parseExtras($('fz-input-extras').value);
+    const qty = Math.max(1, parseInt($('fz-form-qty-val').value, 10) || 1);
+
+    if(editingId){
+      const it = state.items.find(i => i.id === editingId);
+      if(it){
+        it.name = name;
+        it.location = location;
+        it.quantity = qty;
+        it.note = note;
+        it.price = price;
+        it.purchaseDate = purchaseDate || todayISO();
+        it.rating = formRating;
+        it.extras = extras;
+        it.cookType = formCookType;
+        it.manageType = formManageType;
+        it.remainingPct = (formManageType === 'amount') ? formPct : null;
+      }
+    } else {
+      state.items.push({
+        id: uid(),
+        name, location,
+        quantity: qty,
+        note,
+        price,
+        purchaseDate: purchaseDate || todayISO(),
+        rating: formRating,
+        extras,
+        cookType: formCookType,
+        manageType: formManageType,
+        remainingPct: (formManageType === 'amount') ? formPct : null
+      });
+    }
+    save();
+    closeSheet();
+    render();
+    showToast(editingId ? '更新しました' : `「${name}」を追加しました`);
+  }
+
+  function deleteCurrent(){
+    if(!editingId) return;
+    state.items = state.items.filter(i => i.id !== editingId);
+    save();
+    closeSheet();
+    render();
+    showToast('削除しました');
+  }
+
+  // ---------- wire up ----------
+  $('fz-fab').addEventListener('click', openAdd);
+  $('fz-cancel-btn').addEventListener('click', closeSheet);
+  $('fz-save-btn').addEventListener('click', saveForm);
+  $('fz-delete-btn').addEventListener('click', deleteCurrent);
+  overlay.addEventListener('click', (e) => { if(e.target === overlay) closeSheet(); });
+
+  $('fz-form-qty-plus').addEventListener('click', () => {
+    formQty = Math.max(1, (parseInt($('fz-form-qty-val').value,10) || 1) + 1);
+    $('fz-form-qty-val').value = String(formQty);
+  });
+  $('fz-form-qty-minus').addEventListener('click', () => {
+    formQty = Math.max(1, (parseInt($('fz-form-qty-val').value,10) || 1) - 1);
+    $('fz-form-qty-val').value = String(formQty);
+  });
+  $('fz-form-qty-val').addEventListener('change', (e) => {
+    const n = Math.max(1, parseInt(e.target.value,10) || 1);
+    formQty = n;
+    e.target.value = String(n);
+  });
+
+  $('fz-toggle-newloc').addEventListener('click', () => {
+    const showingNew = $('fz-input-newloc').style.display !== 'none';
+    if(showingNew){
+      $('fz-input-newloc').style.display = 'none';
+      $('fz-select-loc').style.display = 'block';
+      $('fz-toggle-newloc').textContent = '＋ 新しい場所を作る';
+    } else {
+      $('fz-input-newloc').style.display = 'block';
+      $('fz-select-loc').style.display = 'none';
+      $('fz-toggle-newloc').textContent = '← 既存の場所から選ぶ';
+      $('fz-input-newloc').focus();
+    }
+  });
+
+  $('fz-form-rate-again').innerHTML = heartIcon(14) + ' また買いたい';
+  $('fz-form-rate-never').innerHTML = brokenHeartIcon(14) + ' もう買わない';
+
+  $('fz-form-rate-again').addEventListener('click', () => {
+    formRating = (formRating === 'again') ? null : 'again';
+    updateRateButtons();
+  });
+  $('fz-form-rate-never').addEventListener('click', () => {
+    formRating = (formRating === 'never') ? null : 'never';
+    updateRateButtons();
+  });
+  $('fz-form-cook-renchin').addEventListener('click', () => {
+    formCookType = (formCookType === 'renchin') ? null : 'renchin';
+    updateCookButtons();
+  });
+  $('fz-form-cook-cook').addEventListener('click', () => {
+    formCookType = (formCookType === 'cook') ? null : 'cook';
+    updateCookButtons();
+  });
+
+  $('fz-form-manage-count').addEventListener('click', () => {
+    formManageType = 'count';
+    updateManageTypeUI();
+  });
+  $('fz-form-manage-amount').addEventListener('click', () => {
+    formManageType = 'amount';
+    updateManageTypeUI();
+  });
+  $('fz-form-pct-select').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      formPct = parseInt(btn.dataset.pct, 10);
+      updateManageTypeUI();
+    });
+  });
+
+  $('fz-search-input').addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    render();
+  });
+
+  // ---------- location manager ----------
+  const locOverlay = $('fz-loc-overlay');
+
+  function renderLocationManager(){
+    const wrap = $('fz-loc-list');
+    if(state.locations.length === 0){
+      wrap.innerHTML = `<p class="fz-locmgr-hint" style="margin:0;">場所がまだありません。下から追加してください。</p>`;
+      return;
+    }
+    wrap.innerHTML = state.locations.map(loc => {
+      const count = state.items.filter(i => i.location === loc).length;
+      return `
+      <div class="fz-locmgr-row" data-loc="${escapeHtml(loc)}">
+        <input type="text" class="fz-locmgr-input" value="${escapeHtml(loc)}" />
+        <span class="fz-locmgr-count">${count}品</span>
+        <button class="fz-locmgr-del" type="button">削除</button>
+      </div>`;
+    }).join('');
+
+    wrap.querySelectorAll('.fz-locmgr-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const row = inp.closest('.fz-locmgr-row');
+        renameLocation(row.dataset.loc, inp.value);
+      });
+      inp.addEventListener('keydown', (e) => { if(e.key === 'Enter') inp.blur(); });
+    });
+
+    wrap.querySelectorAll('.fz-locmgr-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('.fz-locmgr-row');
+        if(btn.dataset.confirm === '1'){
+          deleteLocation(row.dataset.loc);
+        } else {
+          btn.dataset.confirm = '1';
+          btn.textContent = '本当に削除？';
+          btn.classList.add('confirm');
+          setTimeout(() => {
+            if(btn.isConnected){
+              btn.dataset.confirm = '';
+              btn.textContent = '削除';
+              btn.classList.remove('confirm');
+            }
+          }, 2500);
+        }
+      });
+    });
+  }
+
+  function renameLocation(oldName, newNameRaw){
+    const newName = newNameRaw.trim();
+    if(!newName){ showToast('場所名を入力してください'); renderLocationManager(); return; }
+    if(newName === oldName) return;
+    if(state.locations.includes(newName)){
+      state.items.forEach(it => { if(it.location === oldName) it.location = newName; });
+      state.locations = state.locations.filter(l => l !== oldName);
+      showToast(`「${oldName}」を「${newName}」に統合しました`);
+    } else {
+      const idx = state.locations.indexOf(oldName);
+      if(idx > -1) state.locations[idx] = newName;
+      state.items.forEach(it => { if(it.location === oldName) it.location = newName; });
+      showToast('場所名を変更しました');
+    }
+    save();
+    renderLocationManager();
+    render();
+  }
+
+  function deleteLocation(name){
+    const count = state.items.filter(i => i.location === name).length;
+    state.locations = state.locations.filter(l => l !== name);
+    if(count > 0){
+      state.items.forEach(it => { if(it.location === name) it.location = '未分類'; });
+      if(!state.locations.includes('未分類')) state.locations.push('未分類');
+      showToast(`「${name}」を削除し、${count}品を「未分類」に移動しました`);
+    } else {
+      showToast(`「${name}」を削除しました`);
+    }
+    save();
+    renderLocationManager();
+    render();
+  }
+
+  function addLocationFromManager(){
+    const input = $('fz-locmgr-newname');
+    const name = input.value.trim();
+    if(!name) return;
+    if(state.locations.includes(name)){ showToast('その場所はすでにあります'); return; }
+    state.locations.push(name);
+    input.value = '';
+    save();
+    renderLocationManager();
+    render();
+  }
+
+  $('fz-settings-btn').addEventListener('click', () => {
+    renderLocationManager();
+    updateDateModeButtons();
+    locOverlay.classList.add('open');
+  });
+
+  $('fz-datemode-purchase').addEventListener('click', () => {
+    if(state.dateMode === 'purchase') return;
+    state.dateMode = 'purchase';
+    save();
+    updateDateModeButtons();
+    render();
+    showToast('購入日で管理するようにしました');
+  });
+  $('fz-datemode-expiry').addEventListener('click', () => {
+    if(state.dateMode === 'expiry') return;
+    state.dateMode = 'expiry';
+    save();
+    updateDateModeButtons();
+    render();
+    showToast('賞味期限で管理するようにしました');
+  });
+  $('fz-locmgr-close').addEventListener('click', () => locOverlay.classList.remove('open'));
+  locOverlay.addEventListener('click', (e) => { if(e.target === locOverlay) locOverlay.classList.remove('open'); });
+  $('fz-locmgr-add-btn').addEventListener('click', addLocationFromManager);
+  $('fz-locmgr-newname').addEventListener('keydown', (e) => { if(e.key === 'Enter') addLocationFromManager(); });
+
+  // ---------- archive (usage history) ----------
+  const archiveOverlay = $('fz-archive-overlay');
+
+  function renderArchiveChips(){
+    const defs = [
+      {key:'all', label:'すべて'},
+      {key:'again', label:'また買いたい'},
+      {key:'never', label:'もう買わない'},
+      {key:'unrated', label:'未評価'}
+    ];
+    $('fz-archive-chips').innerHTML = defs.map(d =>
+      `<div class="fz-chip ${archiveFilter===d.key?'active':''}" data-filter="${d.key}">${d.label}</div>`
+    ).join('');
+    $('fz-archive-chips').querySelectorAll('.fz-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        archiveFilter = chip.dataset.filter;
+        renderArchive();
+      });
+    });
+  }
+
+  function renderArchive(){
+    renderArchiveChips();
+    const wrap = $('fz-archive-list');
+    let entries = state.archive;
+    if(archiveFilter === 'again') entries = entries.filter(e => e.rating === 'again');
+    else if(archiveFilter === 'never') entries = entries.filter(e => e.rating === 'never');
+    else if(archiveFilter === 'unrated') entries = entries.filter(e => !e.rating);
+
+    if(entries.length === 0){
+      wrap.innerHTML = `<div class="fz-archive-empty">まだ履歴がありません。<br>「使い切った」で登録したアイテムがここに残ります。</div>`;
+      return;
+    }
+
+    wrap.innerHTML = entries.map(e => {
+      const yen = formatYen(e.price);
+      const md = formatMD(e.purchaseDate);
+      return `
+      <div class="fz-archive-card" data-id="${e.id}">
+        <div class="fz-archive-top">
+          <div>
+            <div class="fz-archive-name">${escapeHtml(e.name)}</div>
+            <div class="fz-archive-dates">${md ? md + (state.dateMode === 'expiry' ? 'まで' : '購入') : ''}${md ? ' ・ ' : ''}${formatMD(e.archivedDate)}使い切り</div>
+          </div>
+          <div class="fz-archive-price">${yen}</div>
+        </div>
+        <div class="fz-archive-actions">
+          <button class="fz-rate-btn again ${e.rating==='again'?'active':''}" data-action="again" data-id="${e.id}" type="button">${heartIcon(12)} また買いたい</button>
+          <button class="fz-rate-btn never ${e.rating==='never'?'active':''}" data-action="never" data-id="${e.id}" type="button">${brokenHeartIcon(12)} もう買わない</button>
+          <button class="fz-archive-del" data-id="${e.id}" type="button">×</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    wrap.querySelectorAll('[data-action="again"]').forEach(b => b.addEventListener('click', () => toggleRating(b.dataset.id, 'again')));
+    wrap.querySelectorAll('[data-action="never"]').forEach(b => b.addEventListener('click', () => toggleRating(b.dataset.id, 'never')));
+    wrap.querySelectorAll('.fz-archive-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.confirm === '1'){
+          state.archive = state.archive.filter(e => e.id !== btn.dataset.id);
+          save();
+          renderArchive();
+        } else {
+          btn.dataset.confirm = '1';
+          btn.textContent = '確認';
+          btn.classList.add('confirm');
+          setTimeout(() => {
+            if(btn.isConnected){
+              btn.dataset.confirm = '';
+              btn.textContent = '×';
+              btn.classList.remove('confirm');
+            }
+          }, 2500);
+        }
+      });
+    });
+  }
+
+  function toggleRating(id, rating){
+    const e = state.archive.find(x => x.id === id);
+    if(!e) return;
+    e.rating = (e.rating === rating) ? null : rating;
+    save();
+    renderArchive();
+  }
+
+  $('fz-archive-btn').addEventListener('click', () => {
+    archiveFilter = 'all';
+    renderArchive();
+    archiveOverlay.classList.add('open');
+  });
+  $('fz-archive-close').addEventListener('click', () => archiveOverlay.classList.remove('open'));
+  archiveOverlay.addEventListener('click', (e) => { if(e.target === archiveOverlay) archiveOverlay.classList.remove('open'); });
+
+  $('fz-renchin-filter').addEventListener('click', () => {
+    renchinOnly = !renchinOnly;
+    $('fz-renchin-filter').classList.toggle('active', renchinOnly);
+    render();
+  });
+
+  // ---------- coop paste import ----------
+  const pasteOverlay = $('fz-paste-overlay');
+
+  function splitCoopBlocks(text){
+    // coopの注文履歴は商品ごとに「＊000000」のようなコードで始まるブロックになっていることが多い。
+    // ただしコピー元によって全角/半角の記号や改行の入り方が変わることがあるので、
+    // コード行が見つからない場合は空行区切りにフォールバックする。
+    const normalized = text.replace(/\r\n?/g, '\n');
+    const lines = normalized.split('\n');
+    const codeRe = /^[＊\*]\s*\d+/;
+
+    let blocks = [];
+    let current = null;
+    let foundCode = false;
+    lines.forEach(line => {
+      if(codeRe.test(line.trim())){
+        foundCode = true;
+        if(current) blocks.push(current);
+        current = [];
+      } else if(current){
+        current.push(line);
+      }
+    });
+    if(current) blocks.push(current);
+    if(foundCode && blocks.length) return blocks;
+
+    // フォールバック: 空行で区切る
+    const paraBlocks = [];
+    let buf = [];
+    lines.forEach(line => {
+      if(line.trim() === ''){
+        if(buf.length){ paraBlocks.push(buf); buf = []; }
+      } else {
+        buf.push(line);
+      }
+    });
+    if(buf.length) paraBlocks.push(buf);
+    return paraBlocks;
+  }
+
+  function normalizeDigits(str){
+    // coopの商品名は全角数字(７００ｇ等)で書かれていることが多いため、
+    // 個数を拾う前に半角数字に正規化する。
+    return str.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  }
+
+  function extractPackCount(nameRaw){
+    const name = normalizeDigits(nameRaw);
+    // 「23〜25個入」のような範囲表記は、どちらの数字を採用すべきか判断できないため拾わない。
+    const rangeRe = /\d+\s*[〜～~\-]\s*\d+\s*(個|枚|食|本)\s*入/;
+    if(rangeRe.test(name)) return null;
+    const m = name.match(/(\d+)\s*(個|枚|食|本)\s*入/);
+    if(m){
+      const n = parseInt(m[1], 10);
+      if(n > 0 && n < 1000) return n;
+    }
+    return null;
+  }
+
+  function parseCoopPaste(text){
+    // ブロックの中で最初の空でない行を商品名、
+    // 「冷凍」とだけ書かれた行(本体○○円が出てくる前)があれば冷凍食品と判定、
+    // ブロック内のテキストから最初の「本体○○円」を金額として拾う。
+    const blocks = splitCoopBlocks(text);
+    const results = [];
+    blocks.forEach(blockLines => {
+      let name = '';
+      for(const l of blockLines){
+        const t = l.trim();
+        if(t){ name = t; break; }
+      }
+      if(!name) return;
+
+      // カテゴリ行は「冷凍」「抽選冷凍」のように短く「冷凍」を含む行として現れる。
+      // 商品名の行(通常は容量や個数を含み長め)と混同しないよう、短い行だけを対象にする。
+      let isFrozen = false;
+      for(const l of blockLines){
+        const t = l.trim();
+        if(t.length > 0 && t.length <= 10 && t.includes('冷凍')){ isFrozen = true; break; }
+        if(/本体/.test(t)) break;
+      }
+      if(!isFrozen) return;
+
+      const blockText = blockLines.join('\n');
+      const m = blockText.match(/本体\s*([\d,]+)\s*円/);
+      if(!m) return;
+
+      // 商品名から「◯個入り」等が確信を持って拾えた場合だけ個数管理にし、
+      // 拾えなかった/曖昧だった場合は残量(%)管理・満タン(100%)扱いにする。
+      const packCount = extractPackCount(name);
+      results.push({
+        name,
+        price: parseInt(m[1].replace(/,/g,''), 10),
+        include: true,
+        manageType: packCount ? 'count' : 'amount',
+        quantity: packCount || 1,
+        remainingPct: 100
+      });
+    });
+    return results;
+  }
+
+  function renderPasteResults(){
+    const wrap = $('fz-paste-results');
+    const countEl2 = $('fz-paste-count');
+    $('fz-paste-results-wrap').style.display = 'block';
+
+    if(pasteResults.length === 0){
+      wrap.innerHTML = `<div class="fz-paste-empty">「冷凍」の商品が見つかりませんでした。<br>貼り付けた内容を確認してください。</div>`;
+      countEl2.textContent = '';
+      $('fz-paste-add-btn').style.display = 'none';
+      return;
+    }
+
+    const checkedCount = pasteResults.filter(r => r.include).length;
+    countEl2.textContent = `冷凍の商品を${pasteResults.length}件見つけました (${checkedCount}件を追加します)`;
+    wrap.innerHTML = pasteResults.map((r, idx) => `
+      <div class="fz-paste-row" data-idx="${idx}">
+        <input type="checkbox" class="fz-paste-check" ${r.include ? 'checked' : ''} />
+        <input type="text" class="fz-paste-name" value="${escapeHtml(r.name)}" />
+        <input type="text" class="fz-paste-price" inputmode="numeric" value="${r.price}" />
+        ${r.manageType === 'count'
+          ? `<input type="text" class="fz-paste-qty" inputmode="numeric" value="${r.quantity}" title="個数(自動検出・修正可)" />`
+          : `<span class="fz-paste-amount-tag" title="個数を検出できなかったため残量管理(100%)にします">残量100%</span>`}
+      </div>`).join('');
+
+    wrap.querySelectorAll('.fz-paste-row').forEach(row => {
+      const idx = parseInt(row.dataset.idx, 10);
+      row.querySelector('.fz-paste-check').addEventListener('change', (e) => {
+        pasteResults[idx].include = e.target.checked;
+        renderPasteResults();
+      });
+      row.querySelector('.fz-paste-name').addEventListener('change', (e) => {
+        pasteResults[idx].name = e.target.value.trim();
+      });
+      row.querySelector('.fz-paste-price').addEventListener('change', (e) => {
+        const n = parseInt(String(e.target.value).replace(/[^\d]/g,''), 10);
+        pasteResults[idx].price = isNaN(n) ? 0 : n;
+        e.target.value = String(pasteResults[idx].price);
+      });
+      const qtyInput = row.querySelector('.fz-paste-qty');
+      if(qtyInput){
+        qtyInput.addEventListener('change', (e) => {
+          const n = Math.max(1, parseInt(e.target.value, 10) || 1);
+          pasteResults[idx].quantity = n;
+          e.target.value = String(n);
+        });
+      }
+    });
+    $('fz-paste-add-btn').style.display = checkedCount > 0 ? 'block' : 'none';
+  }
+
+  function openPasteSheet(){
+    pasteResults = [];
+    $('fz-paste-textarea').value = '';
+    $('fz-paste-results-wrap').style.display = 'none';
+    $('fz-paste-add-btn').style.display = 'none';
+    const sel = $('fz-paste-select-loc');
+    sel.innerHTML = locationsInUse().map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+    $('fz-paste-input-newloc').style.display = 'none';
+    $('fz-paste-input-newloc').value = '';
+    $('fz-paste-select-loc').style.display = 'block';
+    $('fz-paste-toggle-newloc').textContent = '＋ 新しい場所を作る';
+    $('fz-paste-date').value = formatMD(todayISO());
+    pasteOverlay.classList.add('open');
+    setTimeout(() => $('fz-paste-textarea').focus(), 250);
+  }
+
+  function closePasteSheet(){
+    pasteOverlay.classList.remove('open');
+  }
+
+  $('fz-paste-btn').addEventListener('click', openPasteSheet);
+  $('fz-paste-cancel-btn').addEventListener('click', closePasteSheet);
+  pasteOverlay.addEventListener('click', (e) => { if(e.target === pasteOverlay) closePasteSheet(); });
+
+  $('fz-paste-parse-btn').addEventListener('click', () => {
+    const text = $('fz-paste-textarea').value;
+    if(!text.trim()){ showToast('注文履歴を貼り付けてください'); return; }
+    pasteResults = parseCoopPaste(text);
+    renderPasteResults();
+  });
+
+  $('fz-paste-toggle-newloc').addEventListener('click', () => {
+    const showingNew = $('fz-paste-input-newloc').style.display !== 'none';
+    if(showingNew){
+      $('fz-paste-input-newloc').style.display = 'none';
+      $('fz-paste-select-loc').style.display = 'block';
+      $('fz-paste-toggle-newloc').textContent = '＋ 新しい場所を作る';
+    } else {
+      $('fz-paste-input-newloc').style.display = 'block';
+      $('fz-paste-select-loc').style.display = 'none';
+      $('fz-paste-toggle-newloc').textContent = '← 既存の場所から選ぶ';
+      $('fz-paste-input-newloc').focus();
+    }
+  });
+
+  $('fz-paste-add-btn').addEventListener('click', () => {
+    const toAdd = pasteResults.filter(r => r.include && r.name);
+    if(toAdd.length === 0){ showToast('追加する商品を選んでください'); return; }
+
+    let location;
+    if($('fz-paste-input-newloc').style.display !== 'none' && $('fz-paste-input-newloc').value.trim()){
+      location = $('fz-paste-input-newloc').value.trim();
+      if(!state.locations.includes(location)) state.locations.push(location);
+    } else {
+      location = $('fz-paste-select-loc').value || '未分類';
+    }
+
+    const dateParsed = parseDateInput($('fz-paste-date').value);
+    const purchaseDate = (dateParsed && dateParsed !== 'invalid') ? dateParsed : todayISO();
+
+    toAdd.forEach(r => {
+      state.items.push({
+        id: uid(),
+        name: r.name,
+        location,
+        quantity: (r.manageType === 'count') ? Math.max(1, r.quantity || 1) : 1,
+        note: '',
+        price: r.price || null,
+        purchaseDate,
+        rating: null,
+        extras: [],
+        cookType: null,
+        manageType: r.manageType === 'count' ? 'count' : 'amount',
+        remainingPct: r.manageType === 'count' ? null : 100
+      });
+    });
+
+    save();
+    closePasteSheet();
+    render();
+    showToast(`${toAdd.length}品を追加しました`);
+  });
+
+  load();
+})();
+</script>
